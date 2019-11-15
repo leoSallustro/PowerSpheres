@@ -1,23 +1,18 @@
 
 var debug = true;
-//créer un canvas qui vas contenir les plateformes
-var cP = document.getElementById("CanvasPlateformes");
-var ctxPlat = cP.getContext("2d");
 
+//créer les variables qui vont contenir les canvas et leur context
+var cP
+var ctxPlat
 
-//créer un canvas qui vas contenir l'arrière plan
-var cF = document.getElementById("CanvasFond");
-var ctxDecorFond = cF.getContext("2d");
+var cF
+var ctxDecorFond
 
+var cJ
+var ctx
 
-//créer un canvas qui vas contenir les joueurs
-var cJ = document.getElementById("CanvasJoueurs");
-var ctx = cJ.getContext("2d");
-
-
-//créer un canvas qui vas contenir le décor
-var cD = document.getElementById("CanvasDecor");
-var ctxDecor = cD.getContext("2d");
+var cD 
+var ctxDecor
 
 
 
@@ -32,9 +27,10 @@ loadImg(arrierePlan);
   plateformes = new Image();
   plateformes.src = 'plateformes.png';
 loadImg(plateformes);
+
 plateformes.crossOrigin = "anonymous";
 
-var ImgDataFond ;
+var imgPlateformes ;
 var allLoaded = 0;
 var collisionTable = [];
 
@@ -53,31 +49,68 @@ function loadImg(img){
 		
 		//donne aux elements html la taille approprié
 		var AllCanvas = document.getElementsByClassName("canvas");
-		for (var i = 0; i < 4 ; i++) {
+		var l = AllCanvas.length;
+		for (var i = 0; i < l ; i++) {
 			AllCanvas[i].style.height = MAP_HEIGHT+"px";
 			AllCanvas[i].style.width = MAP_WIDTH+"px";
 		}
 		
 		FirstAliteration = false;
-	}else if(allLoaded == 3){
-
-		contx.drawImage(img, 0, 0);
-		allLoaded++;
-		//une fois que tout est chargé
-		//dessinner dans les contextes
 		
-		//démarer le jeu
-		ImgDataFond = ctxPlat.getImageData(0, 0, MAP_WIDTH, MAP_HEIGHT).data;
-		collisionTable = imgDataToTable(ImgDataFond);
-		makePlayer();
-		start();
+	}
+	allLoaded++;
+	
+	//une fois que tout est chargé	
+	if(allLoaded == 3){
+		
+		//dessinner toutes les images dans leurs contextes
+		loadAllCtx()
 		
 	}
   }
 }
 
+function loadAllCtx(){
 	
+//créer un canvas qui vas contenir l'arrière plan
+ cF = document.getElementById("CanvasFond");
+ cF.width = MAP_WIDTH;
+ cF.height = MAP_HEIGHT;
+ ctxDecorFond = cF.getContext("2d");
+ctxDecorFond.drawImage(arrierePlan, 0, 0);
+
+//créer un canvas qui vas contenir les joueurs
+ cJ = document.getElementById("CanvasJoueurs");
+cJ.width = MAP_WIDTH;
+cJ.height = MAP_HEIGHT;
+ ctx = cJ.getContext("2d");
+
+//créer un canvas qui vas contenir le décor
+ cD = document.getElementById("CanvasDecor");
+  cD.width = MAP_WIDTH;
+ cD.height = MAP_HEIGHT;
+ ctxDecor = cD.getContext("2d");
+ctxDecor.drawImage(premierPlan, 0, 0);
+
+//remplir  plateformes
+cP = document.getElementById("CanvasPlateformes");
+ cP.width = MAP_WIDTH;
+ cP.height = MAP_HEIGHT;
+ctxPlat = cP.getContext("2d");
+ctxPlat.drawImage(plateformes, 0, 0);
+
+//une fois cela fait, traduire les données en tableau pour l'objet Joueur.
+imgPlateformes = ctxPlat.getImageData(0, 0, MAP_WIDTH, MAP_HEIGHT).data;
+collisionTable = imgDataToTable(imgPlateformes);
+
+//démarer le jeu
+makePlayer();
+start();
+
 	
+}
+
+
 	
 	var PlayerX = 600;
 	var PlayerY = 750;
@@ -102,7 +135,6 @@ function loadImg(img){
 
     
         
-    
 
 
 //transforme l'imagedata des plateformes en tableau, pour etre lu par l'objet joueur rapidement.
@@ -209,31 +241,34 @@ function tickUpdate(){
 		
 		
 }
-
+var maxVelGround = 4;
+var maxVelAir = 2;
+var gainVelAir = 0.3;
+var gainVelGround = 0.7;
+var airResistance = 0.02;
+var groundResistance = 0.07;
 function CalcXvel(){
 	
 	if(IsMoving){
 		if (GoingLeft){
 			if(isInAir()){
-				if(Xvel > -2){
-					Xvel = Xvel - 0.2;	
+				if(Xvel > -maxVelAir){
+					Xvel = Xvel - gainVelAir;	
 				}
-			}else if (Xvel > -4){Xvel = Xvel - 0.5;}
+			}else if (Xvel > -maxVelGround){Xvel = Xvel - gainVelGround;}
 		}
 		if(GoingRight){
 			if(isInAir()){
-				if(Xvel < 2){
-					Xvel = Xvel + 0.2;
+				if(Xvel < maxVelAir){
+					Xvel = Xvel + gainVelAir;
 				}
-			}else if (Xvel < 4){Xvel = Xvel + 0.5;}
+			}else if (Xvel < maxVelGround){Xvel = Xvel + gainVelGround;}
 		}
-	}
-	
-	else{
+	}else{
 		if (Xvel > 0){
-			if(isInAir()){ Xvel = Xvel - 0.02; }
+			if(isInAir()){ Xvel = Xvel - airResistance; }
 			else{ 
-				Xvel = Xvel - 0.07;
+				Xvel = Xvel - groundResistance;
 				if (Xvel < 0.2){
 					Xvel = 0;
 				}
@@ -241,24 +276,28 @@ function CalcXvel(){
 			
 		}
 		if (Xvel < 0){
-			if(isInAir()){ Xvel= Xvel + 0.02; }
-			else{ Xvel= Xvel + 0.07; }
+			if(isInAir()){ Xvel= Xvel + airResistance; }
+			else{ Xvel= Xvel + groundResistance; 
+				
+			}
 		}
 	}
 	
 	
 }
-
+var gravity = 0.05;
+var jumpForce = 3;
 function CalcYvel(){
 	
 	if (IsJumping){ 
-		Yvel = -3;
+		Yvel = -jumpForce;
 		IsJumping = false
 	}
 	
-	Yvel = Yvel + 0.03;
+	Yvel = Yvel + gravity;
 
 }
+
 function display(){
 	
 	document.getElementById("Xvel").innerHTML = "Xvel"+": " + Xvel;
@@ -358,7 +397,7 @@ function calcCollisions(){
 						
 						if(ratio != false){
 								
-								Xmouv = - Math.abs(vx - vx*ratio)*signeColX;
+								Xmouv =  - Math.abs(vx - vx*ratio)*signeColX;
 								PlayerX = PlayerX + Xmouv;
 						}
 					}
@@ -451,7 +490,7 @@ function OnLeftAr(){
 
 function start (){ 
 
-setInterval(tickUpdate,12);
+setInterval(tickUpdate,7);
 }
 
 
