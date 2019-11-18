@@ -167,13 +167,28 @@ function imgDataToTable(imgData){
 }
 
 function RandomizeSpawn(){
-	
+	var positionValid = false
+	while(positionValid == false){
+		var randomPosX = Math.round(Math.random() * MAP_WIDTH)
+		var randomPosY = Math.round(Math.random() * MAP_HEIGHT)
+		//si la balle ne touche aucun mur
+		
+		if(collisionTable[randomPosY - PlayerR][randomPosX] == 0 &&
+		collisionTable[randomPosY + PlayerR][randomPosX] == 0 &&
+		collisionTable[randomPosY][randomPosX - PlayerR] == 0 &&
+		collisionTable[randomPosY][randomPosX + PlayerR ] == 0 ){
+			//la position est validée
+			PlayerX = randomPosX;
+			PlayerY = randomPosY;
+			positionValid = true;
+			return true;
+		}
+	}
 }
 
+
 function makePlayer(){
-	
-	
-	
+	RandomizeSpawn()
 	var paramPlayer = {
 			X: PlayerX,
 			Y: PlayerY,
@@ -241,10 +256,10 @@ function tickUpdate(){
 		
 		
 }
-var maxVelGround = 4;
+var maxVelGround = 3;
 var maxVelAir = 2;
-var gainVelAir = 0.3;
-var gainVelGround = 0.7;
+var gainVelAir = 0.2;
+var gainVelGround = 0.5;
 var airResistance = 0.02;
 var groundResistance = 0.07;
 function CalcXvel(){
@@ -391,12 +406,11 @@ function calcCollisions(){
 						Xvel = Xvel + lostVelX*(-signeColX);//calcul de la colision
 						
 						//l'energie perdue est rétribuée dans velY
-						if(Math.abs(vx) != Player.R ){
-							Yvel = Yvel + lostVelX*(Math.abs(vy/Player.R))*(-signeColX)
+						if(Math.abs(vy) != 0 ){
+							Yvel = Yvel + lostVelX*(Math.abs(vy/Player.R))*(-signeColY)
 						}
 						
 						if(ratio != false){
-								
 								Xmouv =  - Math.abs(vx - vx*ratio)*signeColX;
 								PlayerX = PlayerX + Xmouv;
 						}
@@ -422,15 +436,15 @@ function calcCollisions(){
 						Yvel = Yvel + lostVelY*(-signeColY)//calcul de la colision
 						
 						//retribution de l'énergie perdue
-						if(Math.abs(vy) != Player.R){
-							Xvel = Xvel + lostVelY*(Math.abs(vx/Player.R))*(-signeColY);
+						if(Math.abs(vx) != 0){
+							Xvel = Xvel + lostVelY*(Math.abs(vx/Player.R))*(-signeColX);
 						}
 						
 						if(ratio != false){
 						
-							//trouver la longeur du vecteur
+							// trouver la longeur du vecteur
 							Ymouv =  - Math.abs(vy - vy*ratio)*signeColY;
-							//calcul de la colision imbriquée
+							// calcul de la colision imbriquée
 							PlayerY = PlayerY + Ymouv;
 						}
 					}
