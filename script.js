@@ -14,6 +14,7 @@ var ctx
 var cD 
 var ctxDecor
 
+var debugVisible = false;
 
 
   premierPlan = new Image();
@@ -54,7 +55,9 @@ function loadImg(img){
 			AllCanvas[i].style.height = MAP_HEIGHT+"px";
 			AllCanvas[i].style.width = MAP_WIDTH+"px";
 		}
-		
+		var canvasContainer = document.getElementById("Canvas");
+		canvasContainer.style.width = MAP_WIDTH+"px";
+		canvasContainer.style.height = MAP_HEIGHT+"px";
 		FirstAliteration = false;
 		
 	}
@@ -87,7 +90,7 @@ cJ.height = MAP_HEIGHT;
 
 //créer un canvas qui vas contenir le décor
  cD = document.getElementById("CanvasDecor");
-  cD.width = MAP_WIDTH;
+ cD.width = MAP_WIDTH;
  cD.height = MAP_HEIGHT;
  ctxDecor = cD.getContext("2d");
 ctxDecor.drawImage(premierPlan, 0, 0);
@@ -125,7 +128,7 @@ start();
 
 	var IsJumping = false;
 	var canDoubleJump = true;
-	var PlayerR = 15;
+	var PlayerR = 14;
 	var Player;
 	var Xmouv = 0;
 	var Ymouv = 0;
@@ -193,7 +196,7 @@ function makePlayer(){
 			X: PlayerX,
 			Y: PlayerY,
 			R: PlayerR,
-			couleur: 'blue',
+			couleur: 'red',
 			ctx: ctx,
 			clTable: collisionTable
 		};
@@ -256,12 +259,12 @@ function tickUpdate(){
 		
 		
 }
-var maxVelGround = 3;
+var maxVelGround = 5;
 var maxVelAir = 2;
-var gainVelAir = 0.2;
-var gainVelGround = 0.5;
+var gainVelAir = 0.1;
+var gainVelGround = 0.25;
 var airResistance = 0.02;
-var groundResistance = 0.07;
+var groundResistance = 0.1;
 function CalcXvel(){
 	
 	if(IsMoving){
@@ -300,8 +303,8 @@ function CalcXvel(){
 	
 	
 }
-var gravity = 0.05;
-var jumpForce = 3;
+var gravity = 0.03;
+var jumpForce = 3.5;
 function CalcYvel(){
 	
 	if (IsJumping){ 
@@ -502,9 +505,18 @@ function OnLeftAr(){
 		GoingRight = false;
 }
 
+function ToggleDebug(){
+	if(debugVisible == true ){
+		document.getElementById("debug_info").style.display = "none"
+		debugVisible = false;
+	}else{
+		document.getElementById("debug_info").style.display = "flex"	
+		debugVisible = true;
+	}
+}
+
 function start (){ 
 
 setInterval(tickUpdate,7);
 }
-
 
