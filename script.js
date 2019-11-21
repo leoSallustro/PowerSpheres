@@ -1,5 +1,46 @@
 
-var debug = true;
+
+
+
+ //____________________________________
+		//FONCTIONS D'AFFICHAGE 
+ 
+function ActualiseDebug(){
+	
+	document.getElementById("Xvel").innerHTML = "Xvel"+": " + Xvel;
+	document.getElementById("Yvel").innerHTML = "Yvel"+": " + Yvel;
+	
+	document.getElementById("isInAir").innerHTML = "isInAir"+": " + isInAir;
+	
+	if (Player.currentColisions != false ){
+		document.getElementById("collision").innerHTML = "colision"+": " + "TRUE";
+	}else{
+		document.getElementById("collision").innerHTML = "colision"+": " + "FALSE";
+	}
+	
+
+	document.getElementById("Ycol").innerHTML = "Ycol"+": " + vy/Player.R;
+	document.getElementById("Xcol").innerHTML = "Xcol"+": " + vx/Player.R;
+	if (vy != 0){
+	document.getElementById("lastYcol").innerHTML = "Last Ycol : " + vy;
+	}
+	if (vx != 0){
+	document.getElementById("lastXcol").innerHTML = "Last Xcol : " + vx;
+	}
+	
+	
+	document.getElementById("Ymouv").innerHTML = "Ymouv"+": " + Ymouv;
+	document.getElementById("Xmouv").innerHTML = "Xmouv"+": " + Xmouv;
+	if (Ymouv != 0){
+	document.getElementById("lastYmouv").innerHTML = "Last Ymouv : " + Ymouv;
+	}
+	if (Xmouv != 0){
+	document.getElementById("lastXmouv").innerHTML = "Last Xmouv : " + Xmouv;
+	}
+
+}
+
+	// GESTION DES CANVAS
 
 //créer les variables qui vont contenir les canvas et leur context
 var cP
@@ -32,14 +73,14 @@ loadImg(plateformes);
 plateformes.crossOrigin = "anonymous";
 
 var imgPlateformes ;
+
+
 var allLoaded = 0;
-var collisionTable = [];
-
-var MAP_WIDTH = 1920;
-var MAP_HEIGHT = 1080;
-
+var MAP_WIDTH;
+var MAP_HEIGHT;
 var FirstAliteration = true;
 
+//s'assurent que les contextes soient chargés avant de lancer la partie.
 function loadImg(img){
   img.onload = function(){
 	  
@@ -67,13 +108,15 @@ function loadImg(img){
 	if(allLoaded == 3){
 		
 		//dessinner toutes les images dans leurs contextes
-		loadAllCtx()
+		DrawAllCtx()
 		
 	}
   }
 }
 
-function loadAllCtx(){
+//dessine les contextes
+
+function DrawAllCtx(){
 	
 //créer un canvas qui vas contenir l'arrière plan
  cF = document.getElementById("CanvasFond");
@@ -114,33 +157,109 @@ start();
 }
 
 
+
+
+ //___________________________________________________________
+		//INITIALISATION ET 'CABLAGE' DES INPUTS CLAVIER
+
+
+var goingLeft = false;
+var goingRight = false;
+var isGoingDown = false;
+var canGoDown = false;
+
+document.addEventListener('keydown', function(event) {
+	if (event.code  ==  'ArrowUp') {
+		OnUpAr()
+	}
 	
-	var PlayerX = 600;
-	var PlayerY = 750;
-	var GoingLeft = false;
-	var GoingRight = false;
-
-	var Xvel = 0.0 ;
-	var Yvel = 0.0 ;
+	if (event.code  ==  'ArrowDown') {
+		OnDownAr()
+	}
 	
-	var vy = 0;
-	var vx = 0;
+	if (event.code  ==  'ArrowRight') {
+		OnRightAr();
+	}
 
-	var IsJumping = false;
-	var canDoubleJump = true;
-	var PlayerR = 14;
-	var Player;
-	var Xmouv = 0;
-	var Ymouv = 0;
-
-
+	if (event.code  ==  'ArrowLeft') {
+		OnLeftAr();
+	}
+	
+});
 
 
-    
-        
+
+	
+document.addEventListener('keyup', function(event) {
+
+	if (event.code  ==  'ArrowRight') {
+		goingRight = false;
+	}
+
+	if (event.code  ==  'ArrowLeft') {
+		goingLeft = false;
+	}
+	
+	if (event.code  ==  'ArrowDown') {
+		isGoingDown = false;
+	}
+});
+
+var IsJumping = false;
+var canDoubleJump = true;
+
+function OnUpAr(){
+	
+	if (isInAir == false ){
+		canDoubleJump = true;
+		IsJumping = true;
+	}
+	else if (canDoubleJump){
+		canDoubleJump = false;
+		IsJumping = true;
+	}
+	
+}
+
+function OnDownAr(){
+	
+	if (isInAir && canGoDown){
+		isGoingDown = true;
+	}
+
+}
+
+function OnRightAr(){
+		goingRight = true;
+		goingLeft = false;
+}
+
+function OnLeftAr(){
+		goingLeft = true;
+		goingRight = false;
+}
+
+function ToggleDebug(){
+	if(debugVisible == true ){
+		document.getElementById("debug_info").style.display = "none"
+		debugVisible = false;
+	}else{
+		document.getElementById("debug_info").style.display = "flex"	
+		debugVisible = true;
+	}
+}
+ 
 
 
-//transforme l'imagedata des plateformes en tableau, pour etre lu par l'objet joueur rapidement.
+
+
+
+//_____________________________________________  
+		// INITIALISATION DE LA PARTIE
+
+var collisionTable = [];
+
+//transforme l'imagedata des plateformes en tableau, pour etre lu par l'objet Player rapidement.
 function imgDataToTable(imgData){
 	
 		var val = 0;
@@ -169,6 +288,11 @@ function imgDataToTable(imgData){
 		return(outputTable);
 }
 
+
+var PlayerX ;
+var PlayerY ;
+
+//crée un point de spawn aléatoire 
 function RandomizeSpawn(){
 	var positionValid = false
 	while(positionValid == false){
@@ -190,13 +314,18 @@ function RandomizeSpawn(){
 }
 
 
+var PlayerR = 14;
+var PlayerColor = "red";
+var Player;
+
+//crée l'oject Player
 function makePlayer(){
 	RandomizeSpawn()
 	var paramPlayer = {
 			X: PlayerX,
 			Y: PlayerY,
 			R: PlayerR,
-			couleur: 'red',
+			couleur: PlayerColor,
 			ctx: ctx,
 			clTable: collisionTable
 		};
@@ -207,76 +336,75 @@ function makePlayer(){
 
 
 
-document.addEventListener('keydown', function(event) {
-	if (event.code  ==  'ArrowUp') {
-		OnUpAr()
-	}
-	if (event.code  ==  'ArrowRight') {
-		OnRightAr();
-	}
-
-	if (event.code  ==  'ArrowLeft') {
-		OnLeftAr();
-	}
-	
-});
 
 
-
-document.addEventListener('keyup', function(event) {
-
-	if (event.code  ==  'ArrowRight') {
-		GoingRight = false;
-	}
-
-	if (event.code  ==  'ArrowLeft') {
-		GoingLeft = false;
-	}
-});
-
-
+//____________________________
+		//LA PARTIE
+		
+//s'active ~60x par seconde pour lancer les autres fonctions de la partie et donc donner l'illusion de mouvement
 function tickUpdate(){
-	
+		//mets a jour la liste des collisions du joueur
 		Player.updateColisions();
 		
-		IsMoving = GoingLeft||GoingRight;
+		isInAir = ActualiseIsInAir();
+		if (!isInAir &&  !canGoDown){ canGoDown = true ;}
 		
+		
+		IsMoving = goingLeft||goingRight;
 		CalcXvel();
 		CalcYvel();
 		
 		calcCollisions();
 		
+		//evite que le joueur aille assez vite pour destabiliser le systeme de collisions
+		Xvel = Xvel > PlayerR ? PlayerR : Xvel;
+		Yvel = Yvel > PlayerR ? PlayerR : Yvel;
 		
 		PlayerX = PlayerX + Xvel;
 		PlayerY = PlayerY + Yvel;
 		
-		
-		
-		display();
-		
-		
 		Player.UpdateXY(PlayerX,PlayerY);
+		
+		if (debugVisible){ ActualiseDebug(); }
 		
 		
 }
-var maxVelGround = 5;
-var maxVelAir = 2;
-var gainVelAir = 0.1;
-var gainVelGround = 0.25;
-var airResistance = 0.02;
-var groundResistance = 0.1;
+
+
+var isInAir = false;
+
+//detecte si le joueur est en l'air
+function ActualiseIsInAir(){
+	if (Player.currentColisions != false ){
+		if(vy > -0.5){
+			return false;
+		}
+	}
+	return true;
+}
+
+
+var Xvel = 0.0 ;
+
+var maxVelGround = 8.5;
+var maxVelAir = 3.4;
+var gainVelAir = 0.17;
+var gainVelGround = 0.425;
+var airResistance = 0.035;
+var groundResistance = 0.17;
+//calcul la vélocitée en X
 function CalcXvel(){
 	
 	if(IsMoving){
-		if (GoingLeft){
-			if(isInAir()){
+		if (goingLeft){
+			if(isInAir){
 				if(Xvel > -maxVelAir){
 					Xvel = Xvel - gainVelAir;	
 				}
 			}else if (Xvel > -maxVelGround){Xvel = Xvel - gainVelGround;}
 		}
-		if(GoingRight){
-			if(isInAir()){
+		if(goingRight){
+			if(isInAir){
 				if(Xvel < maxVelAir){
 					Xvel = Xvel + gainVelAir;
 				}
@@ -284,7 +412,7 @@ function CalcXvel(){
 		}
 	}else{
 		if (Xvel > 0){
-			if(isInAir()){ Xvel = Xvel - airResistance; }
+			if(isInAir){ Xvel = Xvel - airResistance; }
 			else{ 
 				Xvel = Xvel - groundResistance;
 				if (Xvel < 0.2){
@@ -294,7 +422,7 @@ function CalcXvel(){
 			
 		}
 		if (Xvel < 0){
-			if(isInAir()){ Xvel= Xvel + airResistance; }
+			if(isInAir){ Xvel= Xvel + airResistance; }
 			else{ Xvel= Xvel + groundResistance; 
 				
 			}
@@ -303,54 +431,40 @@ function CalcXvel(){
 	
 	
 }
-var gravity = 0.03;
-var jumpForce = 3.5;
+
+var Yvel = 0.0 ;
+var gravity = 0.07;
+var downForce = 5;
+var jumpForce = 6;
+//calcul la velocitée en Y
 function CalcYvel(){
 	
 	if (IsJumping){ 
 		Yvel = -jumpForce;
 		IsJumping = false
 	}
+	if (isGoingDown && canGoDown){
+		Yvel = Yvel + downForce;
+		console.log("cbon")
+		isGoingDown = false;
+		canGoDown = false;
+	}
 	
-	Yvel = Yvel + gravity;
+		Yvel = Yvel + gravity;
+	
+	
+	
 
 }
 
-function display(){
-	
-	document.getElementById("Xvel").innerHTML = "Xvel"+": " + Xvel;
-	document.getElementById("Yvel").innerHTML = "Yvel"+": " + Yvel;
-	
-	document.getElementById("isInAir").innerHTML = "isInAir"+": " + isInAir();
-	
-	if (Player.currentColisions != false ){
-		document.getElementById("collision").innerHTML = "colision"+": " + "TRUE";
-	}else{
-		document.getElementById("collision").innerHTML = "colision"+": " + "FALSE";
-	}
-	
 
-	document.getElementById("Ycol").innerHTML = "Ycol"+": " + vy/Player.R;
-	document.getElementById("Xcol").innerHTML = "Xcol"+": " + vx/Player.R;
-	if (vy != 0){
-	document.getElementById("lastYcol").innerHTML = "Last Ycol : " + vy;
-	}
-	if (vx != 0){
-	document.getElementById("lastXcol").innerHTML = "Last Xcol : " + vx;
-	}
-	
-	
-	document.getElementById("Ymouv").innerHTML = "Ymouv"+": " + Ymouv;
-	document.getElementById("Xmouv").innerHTML = "Xmouv"+": " + Xmouv;
-	if (Ymouv != 0){
-	document.getElementById("lastYmouv").innerHTML = "Last Ymouv : " + Ymouv;
-	}
-	if (Xmouv != 0){
-	document.getElementById("lastXmouv").innerHTML = "Last Xmouv : " + Xmouv;
-	}
+var vy = 0;
+var vx = 0;
 
-}
+var Xmouv = 0;
+var Ymouv = 0;
 
+//modification de la vélocitée en X et en Y en fonction des collisions
 function calcCollisions(){
 	
 	if (Player.currentColisions.length != false ){
@@ -460,10 +574,7 @@ function calcCollisions(){
 			
 			
 		}
-		if (debug == true ){
-			console.log("première colision: "+ Player.currentColisions)
-			debug = false;
-		}
+		
 	}else{
 		vx = 0;
 		vy = 0;
@@ -473,50 +584,10 @@ function calcCollisions(){
 
 }
 
-function isInAir(){
-	if (Player.currentColisions != false ){
-		if(vy > -0.5){
-			return false ;
-		}
-	}
-	return true;
-}
 
-function OnUpAr(){
-	
-	if (!(isInAir())){
-		canDoubleJump = true;
-		IsJumping = true;
-	}
-	else if (canDoubleJump){
-		canDoubleJump = false;
-		IsJumping = true;
-	}
-	
-}
 
-function OnRightAr(){
-		GoingRight = true;
-		GoingLeft = false;
-}
-
-function OnLeftAr(){
-		GoingLeft = true;
-		GoingRight = false;
-}
-
-function ToggleDebug(){
-	if(debugVisible == true ){
-		document.getElementById("debug_info").style.display = "none"
-		debugVisible = false;
-	}else{
-		document.getElementById("debug_info").style.display = "flex"	
-		debugVisible = true;
-	}
-}
-
+		// :: DEMARRAGE DE LA PARTIE ::
 function start (){ 
-
-setInterval(tickUpdate,7);
+setInterval(tickUpdate,12);
 }
 
